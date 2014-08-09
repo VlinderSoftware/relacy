@@ -684,7 +684,7 @@ struct ws_deque_test : rl::test_suite<ws_deque_test, 4>
 int main()
 {
     rl::test_params p;
-    p.iteration_count = 1000000;
+    p.iteration_count = 1000/*000*/;
     rl::simulate<ws_deque_test>(p);
 }
 

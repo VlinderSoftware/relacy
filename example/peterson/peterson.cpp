@@ -1,13 +1,13 @@
 #include "stdafx.h"
-#include "../../relacy/relacy_std.hpp"
+#include "../../relacy/relacy.hpp"
 #include "../../relacy/windows.h"
 
 
 struct peterson_mutex_test : rl::test_suite<peterson_mutex_test, 2>
 {
-    std::atomic<int> flag0;
-    std::atomic<int> flag1;
-    std::atomic<int> turn;
+    rl::atomic<int> flag0;
+    rl::atomic<int> flag1;
+    rl::atomic<int> turn;
 
     rl::var<int> data;
 
@@ -52,9 +52,9 @@ struct peterson_mutex_test : rl::test_suite<peterson_mutex_test, 2>
 
 struct peterson_mutex_test2 : rl::test_suite<peterson_mutex_test2, 2>
 {
-    std::atomic<int> flag0;
-    std::atomic<int> flag1;
-    std::atomic<int> turn;
+    rl::atomic<int> flag0;
+    rl::atomic<int> flag1;
+    rl::atomic<int> turn;
 
     rl::var<int> data;
 
@@ -101,9 +101,9 @@ struct peterson_mutex_test2 : rl::test_suite<peterson_mutex_test2, 2>
 
 struct peterson_mutex_test3 : rl::test_suite<peterson_mutex_test3, 2>
 {
-    std::atomic<int> flag0;
-    std::atomic<int> flag1;
-    std::atomic<int> turn;
+    rl::atomic<int> flag0;
+    rl::atomic<int> flag1;
+    rl::atomic<int> turn;
 
     rl::var<int> data;
 
@@ -118,31 +118,31 @@ struct peterson_mutex_test3 : rl::test_suite<peterson_mutex_test3, 2>
     {
         if (0 == index)
         {
-            flag0.store(1, std::memory_order_relaxed);
-            std::atomic_thread_fence(std::memory_order_seq_cst);
-            turn.store(1, std::memory_order_relaxed);
-            std::atomic_thread_fence(std::memory_order_seq_cst);
+            flag0.store(1, rl::memory_order_relaxed);
+            rl::atomic_thread_fence(rl::memory_order_seq_cst);
+            turn.store(1, rl::memory_order_relaxed);
+            rl::atomic_thread_fence(rl::memory_order_seq_cst);
 
-            while (flag1.load(std::memory_order_acquire)
-                && 1 == turn.load(std::memory_order_relaxed));
+            while (flag1.load(rl::memory_order_acquire)
+                && 1 == turn.load(rl::memory_order_relaxed));
 
             data($) = 1;
 
-            flag0.store(0, std::memory_order_release);
+            flag0.store(0, rl::memory_order_release);
         }
         else
         {
-            flag1.store(1, std::memory_order_relaxed);
-            std::atomic_thread_fence(std::memory_order_seq_cst);
-            turn.store(0, std::memory_order_relaxed);
-            std::atomic_thread_fence(std::memory_order_seq_cst);
+            flag1.store(1, rl::memory_order_relaxed);
+            rl::atomic_thread_fence(rl::memory_order_seq_cst);
+            turn.store(0, rl::memory_order_relaxed);
+			rl::atomic_thread_fence(rl::memory_order_seq_cst);
 
-            while (flag0.load(std::memory_order_acquire)
-                && 0 == turn.load(std::memory_order_relaxed));
+			while (flag0.load(rl::memory_order_acquire)
+				&& 0 == turn.load(rl::memory_order_relaxed));
 
             data($) = 2;
 
-            flag1.store(0, std::memory_order_release);
+			flag1.store(0, rl::memory_order_release);
         }
     }
 };
@@ -152,9 +152,9 @@ struct peterson_mutex_test3 : rl::test_suite<peterson_mutex_test3, 2>
 // FAILS WITH DATA RACE
 struct peterson_mutex_test4 : rl::test_suite<peterson_mutex_test4, 2>
 {
-    std::atomic<int> flag0;
-    std::atomic<int> flag1;
-    std::atomic<int> turn;
+	rl::atomic<int> flag0;
+	rl::atomic<int> flag1;
+	rl::atomic<int> turn;
 
     rl::var<int> data;
 
@@ -204,7 +204,7 @@ public:
 
     eventcount()
     {
-        state_.store(0, std::memory_order_relaxed);
+		state_.store(0, rl::memory_order_relaxed);
         sema_ = CreateSemaphore(0, 0, LONG_MAX, 0);
     }
 
@@ -215,21 +215,21 @@ public:
 
     state_t prepare()
     {
-        return state_.fetch_add(waiters_inc, std::memory_order_seq_cst);
+		return state_.fetch_add(waiters_inc, rl::memory_order_seq_cst);
     }
 
     void retire()
     {
-        state_.fetch_add((state_t)-(int)waiters_inc, std::memory_order_seq_cst);
+		state_.fetch_add((state_t)-(int)waiters_inc, rl::memory_order_seq_cst);
     }
 
     void wait(state_t cmp)
     {
         WaitForSingleObject(sema_, INFINITE);
-        state_t cmp0 = state_.load(std::memory_order_seq_cst);
+		state_t cmp0 = state_.load(rl::memory_order_seq_cst);
         if ((cmp & generation_mask) == (cmp0 & generation_mask))
         {
-            state_.fetch_add((state_t)-(int)waiters_inc, std::memory_order_seq_cst);
+			state_.fetch_add((state_t)-(int)waiters_inc, rl::memory_order_seq_cst);
             ReleaseSemaphore(sema_, 1, 0);
             SwitchToThread();
         }
@@ -237,19 +237,19 @@ public:
 
     void signal()
     {
-        std::atomic_thread_fence(std::memory_order_seq_cst);
+		rl::atomic_thread_fence(rl::memory_order_seq_cst);
         signal_relaxed();
     }
 
     void signal_relaxed()
     {
-        state_t cmp = state_.load(std::memory_order_seq_cst);
+		state_t cmp = state_.load(rl::memory_order_seq_cst);
         if (0 == (cmp & waiters_mask))
             return;
         for (;;)
         {
             state_t xchg = (cmp & ~waiters_mask) + generation_inc;
-            if (state_.compare_exchange_weak(cmp, xchg, std::memory_order_seq_cst))
+			if (state_.compare_exchange_weak(cmp, xchg, rl::memory_order_seq_cst))
             {
                 ReleaseSemaphore(sema_, cmp & waiters_mask, 0);
                 return;
@@ -260,7 +260,7 @@ public:
     }
     
 private:
-    std::atomic<state_t> state_;
+	rl::atomic<state_t> state_;
     HANDLE sema_;
 
     static state_t const waiters_inc = 1;
@@ -315,7 +315,7 @@ struct signaling_test : rl::test_suite<signaling_test, 6>
 {
     //rl::HANDLE              var_wait_for_items;
     //rl::CRITICAL_SECTION    mtx_items_avail;
-    //std::atomic<unsigned>   n_waiting_consumers;
+    //rl::atomic<unsigned>   n_waiting_consumers;
     //rl::var<unsigned>       consumer_wait_generation;
     //rl::var<unsigned>       n_consumers_to_wakeup;
 
@@ -384,15 +384,15 @@ struct signaling_test : rl::test_suite<signaling_test, 6>
     {
         ec_.signal();
         /*
-        std::atomic_thread_fence($)(std::memory_order_seq_cst);
-        if (n_waiting_consumers($).load(std::memory_order_relaxed))
+        rl::atomic_thread_fence($)(rl::memory_order_seq_cst);
+        if (n_waiting_consumers($).load(rl::memory_order_relaxed))
         {
             rl::EnterCriticalSection(&mtx_items_avail, $);
-            if (n_waiting_consumers($).load(std::memory_order_relaxed) > 0)
+            if (n_waiting_consumers($).load(rl::memory_order_relaxed) > 0)
             {
                 consumer_wait_generation($) += 1;
                 //RL_ASSERT(n_consumers_to_wakeup($) == 0);
-                n_consumers_to_wakeup($) = n_waiting_consumers($).load(std::memory_order_relaxed);
+                n_consumers_to_wakeup($) = n_waiting_consumers($).load(rl::memory_order_relaxed);
                 rl::SetEvent(var_wait_for_items, $);
             }
             rl::LeaveCriticalSection(&mtx_items_avail, $);
@@ -409,8 +409,8 @@ struct signaling_test : rl::test_suite<signaling_test, 6>
 
         /*
         rl::EnterCriticalSection(&mtx_items_avail, $);
-        n_waiting_consumers($).store(n_waiting_consumers($).load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
-        std::atomic_thread_fence($)(std::memory_order_seq_cst);
+        n_waiting_consumers($).store(n_waiting_consumers($).load(rl::memory_order_relaxed) + 1, rl::memory_order_relaxed);
+        rl::atomic_thread_fence($)(rl::memory_order_seq_cst);
         while (0 == queue[my_pos])
         {
             unsigned my_generation = consumer_wait_generation($);
@@ -425,7 +425,7 @@ struct signaling_test : rl::test_suite<signaling_test, 6>
             if (--n_consumers_to_wakeup($) == 0)
                 rl::ResetEvent(var_wait_for_items, $);
         }
-        n_waiting_consumers($).store(n_waiting_consumers($).load(std::memory_order_relaxed) - 1, std::memory_order_relaxed);
+        n_waiting_consumers($).store(n_waiting_consumers($).load(rl::memory_order_relaxed) - 1, rl::memory_order_relaxed);
         rl::LeaveCriticalSection(&mtx_items_avail, $);
         */
     }

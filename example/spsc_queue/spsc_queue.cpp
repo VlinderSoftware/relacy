@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "../../relacy/relacy_std.hpp"
+#include "../../relacy/relacy.hpp"
 
 template<typename T>
 class nonblocking_spsc_queue
@@ -21,14 +21,14 @@ public:
     void enqueue(T data)
     {
         node* n = new node (data);
-        VAR(head)->next.store(n, std::memory_order_release); 
+		VAR(head)->next.store(n, rl::memory_order_release);
         VAR(head) = n;
     }
 
     bool dequeue(T& data)
     {
         node* t = VAR(tail);
-        node* n = t->next.load(std::memory_order_acquire);
+		node* n = t->next.load(rl::memory_order_acquire);
         if (0 == n)
             return false;
         data = n->VAR(data);
@@ -40,7 +40,7 @@ public:
 private:
     struct node
     {
-        std::atomic<node*> next;
+		rl::atomic<node*> next;
         VAR_T(T) data;
 
         node(T data = T())
@@ -84,29 +84,29 @@ public:
 
     void signal_relaxed()
     {
-        unsigned cmp = count.load(std::memory_order_relaxed);
+		unsigned cmp = count.load(rl::memory_order_relaxed);
         signal_impl(cmp);
     }
 
     void signal()
     {
-        unsigned cmp = count.fetch_add(0, std::memory_order_seq_cst);
+		unsigned cmp = count.fetch_add(0, rl::memory_order_seq_cst);
         signal_impl(cmp);
     }
 
     unsigned get()
     {
-        unsigned cmp = count.fetch_or(0x80000000, std::memory_order_acquire);
+		unsigned cmp = count.fetch_or(0x80000000, rl::memory_order_acquire);
         return cmp & 0x7FFFFFFF;
     }
 
     void wait(unsigned cmp)
     {
-        unsigned ec = count.load(std::memory_order_seq_cst);
+		unsigned ec = count.load(rl::memory_order_seq_cst);
         if (cmp == (ec & 0x7FFFFFFF))
         {
             guard.lock($);
-            ec = count.load(std::memory_order_seq_cst);
+			ec = count.load(rl::memory_order_seq_cst);
             if (cmp == (ec & 0x7FFFFFFF))
             {
                 waiters($) += 1;
@@ -117,10 +117,10 @@ public:
     }
 
 private:
-    std::atomic<unsigned> count;
+	rl::atomic<unsigned> count;
     VAR_T(unsigned) waiters;
-    std::mutex guard;
-    std::condition_variable cv;
+	rl::mutex guard;
+	rl::condition_variable cv;
 
     void signal_impl(unsigned cmp)
     {
@@ -128,7 +128,7 @@ private:
         {
             guard.lock($);
             while (false == count.compare_exchange_weak(cmp,
-                (cmp + 1) & 0x7FFFFFFF, std::memory_order_relaxed));
+				(cmp + 1) & 0x7FFFFFFF, rl::memory_order_relaxed));
             unsigned w = VAR(waiters);
             VAR(waiters) = 0;
             guard.unlock($);

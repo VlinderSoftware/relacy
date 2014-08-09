@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.11 FATAL_ERROR)
 project(relacy)
 
 include(CheckCXXSourceCompiles)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 check_cxx_source_compiles("
   #include <atomic>
@@ -15,10 +16,6 @@ check_cxx_source_compiles("
   }
 " HAVE_STD_ATOMIC)
 
-#add_library(relacy INTERFACE)
-#target_include_directories(relacy INTERFACE
-#    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/relacy>
-#    )
 file(GLOB_RECURSE RELACY_SOURCES relacy/*.h relacy/*.hpp)
 add_custom_target(relacy SOURCES ${RELACY_SOURCES})
 
@@ -42,4 +39,32 @@ add_executable(test_relacy
     test/wfmo.hpp
     test/windows.hpp
     )
+
+foreach(example
+	cli_ws_deque
+	condvar
+#	eao_blocking
+	eventcount
+	examples
+	java_ws_deque
+	mpmc
+	mutex_business_logic
+	peterson
+	proxy_collector
+	ref_counting
+	smr
+	spsc_queue
+	stack
+	tbb_eventcount
+	ws_deque
+	ws_deque2
+	)
+	add_executable(example_${example}
+		example/${example}/${example}.cpp
+		example/${example}/stdafx.cpp
+		example/${example}/stdafx.h
+		)
+	add_test(example_${example} ${EXECUTABLE_OUTPUT_PATH}/example_${example})
+endforeach()
+
 configure_file(relacy_config.hpp.in relacy_config.hpp)

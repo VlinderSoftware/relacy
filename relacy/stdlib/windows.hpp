@@ -126,7 +126,7 @@ inline int rl_CloseHandle(rl_HANDLE h, debug_info_param info)
     return 1;
 }
 
-inline int rl_ReleaseSemaphore(rl_HANDLE sema, long count, long* prev_count, debug_info_param info)
+inline int rl_ReleaseSemaphore(rl_HANDLE sema, LONG count, LONG* prev_count, debug_info_param info)
 {
     unsigned prev = 0;
     bool result = static_cast<semaphore<sem_tag_win>*>(sema)->post(count, prev, info);

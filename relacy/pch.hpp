@@ -53,7 +53,7 @@
 #   define RL_WIN
 #endif
 
-#if defined(RL_WIN) || defined(_CYGWIN)
+#if defined(RL_WIN) || defined(__CYGWIN__)
 #   ifndef _WIN32_WINNT
 #       define _WIN32_WINNT 0x0500
 #   endif

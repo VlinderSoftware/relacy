@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "../../relacy/relacy_std.hpp"
+#include "../../relacy/relacy.hpp"
 
 
 using namespace std;
@@ -14,6 +14,8 @@ class ws_deque
 public:
     ws_deque()
     {
+		using namespace rl;
+
         VAR(m_mask) = initial_size - 1;
         m_headIndex.store(0, memory_order_relaxed);
         m_tailIndex.store(0, memory_order_relaxed);
@@ -34,48 +36,50 @@ public:
 
     size_t Count() const
     {
-        return m_tailIndex.load(memory_order_acquire)
-             - m_headIndex.load(memory_order_acquire);
+        return m_tailIndex.load(rl::memory_order_acquire)
+             - m_headIndex.load(rl::memory_order_acquire);
     }
 
     void push(T item)
     {
-        size_t tail = m_tailIndex.load(memory_order_acquire);
-        if (tail < m_headIndex.load(memory_order_acquire) + VAR(m_mask))
+        size_t tail = m_tailIndex.load(rl::memory_order_acquire);
+        if (tail < m_headIndex.load(rl::memory_order_acquire) + VAR(m_mask))
         {
-            VAR(m_array)[tail & VAR(m_mask)].store(item, memory_order_relaxed);
-            m_tailIndex.store(tail + 1, memory_order_release);
+            VAR(m_array)[tail & VAR(m_mask)].store(item, rl::memory_order_relaxed);
+            m_tailIndex.store(tail + 1, rl::memory_order_release);
         }
         else
         {
             m_foreignLock.lock($);
-            size_t head = m_headIndex.load(memory_order_acquire);
+            size_t head = m_headIndex.load(rl::memory_order_acquire);
             size_t count = Count();
             if (count >= VAR(m_mask))
             {
                 size_t arraySize = m_arraySize($);
                 size_t mask = VAR(m_mask);
-                atomic<T>* newArray = new atomic<T> [arraySize * 2];
-                atomic<T>* arr = m_array($);
+                rl::atomic<T>* newArray = new rl::atomic<T> [arraySize * 2];
+                rl::atomic<T>* arr = m_array($);
                 //!!! for (size_t i = 0; i != arraySize; ++i)
                 for (size_t i = 0; i != count; ++i)
-                    newArray[i].store(arr[(i + head) & mask].load(memory_order_seq_cst), memory_order_relaxed);
+                    newArray[i].store(arr[(i + head) & mask].load(rl::memory_order_seq_cst), rl::memory_order_relaxed);
                 delete [] VAR(m_array);
                 VAR(m_array) = newArray;
                 VAR(m_arraySize) = arraySize * 2;
-                m_headIndex.store(0, memory_order_release);
-                m_tailIndex.store(count, memory_order_release);
+                m_headIndex.store(0, rl::memory_order_release);
+                m_tailIndex.store(count, rl::memory_order_release);
                 tail = count;
                 VAR(m_mask) = (mask * 2) | 1;
             }
-            VAR(m_array)[tail & VAR(m_mask)].store(item, memory_order_relaxed);
-            m_tailIndex.store(tail + 1, memory_order_release);
+            VAR(m_array)[tail & VAR(m_mask)].store(item, rl::memory_order_relaxed);
+            m_tailIndex.store(tail + 1, rl::memory_order_release);
             m_foreignLock.unlock($);
         }
     }
 
     bool pop(T& item)
     {
+		using namespace rl;
+
         size_t tail = m_tailIndex.load(memory_order_acquire);
         if (tail == 0)
             return false;
@@ -107,6 +111,8 @@ public:
 
     bool steal(T& item)
     {
+		using namespace rl;
+
         if (false == m_foreignLock.try_lock($))
             return false;
         size_t head = m_headIndex.load(memory_order_acquire);
@@ -128,12 +134,12 @@ public:
 
 private:
     static size_t const initial_size = 2;
-    var<atomic<T>*> m_array;
-    var<size_t> m_mask;
-    var<size_t> m_arraySize;
-    atomic<size_t> m_headIndex;
-    atomic<size_t> m_tailIndex;
-    mutex m_foreignLock;
+    rl::var<rl::atomic<T>*> m_array;
+    rl::var<size_t> m_mask;
+    rl::var<size_t> m_arraySize;
+    rl::atomic<size_t> m_headIndex;
+    rl::atomic<size_t> m_tailIndex;
+    rl::mutex m_foreignLock;
 };
 
 

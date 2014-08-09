@@ -9,17 +9,17 @@ public:
     {
         assert(count >= 6);
         sema = CreateSemaphore(0, 0, 1, 0);
-        waiting.store(false, std::memory_order_relaxed);
+		waiting.store(false, rl::memory_order_relaxed);
         deq_node = 0;
         block = new node [count];
-        block->next.store(0, std::memory_order_relaxed);
+		block->next.store(0, rl::memory_order_relaxed);
         full_tail = block;
-        full_head.store(block, std::memory_order_relaxed);
+		full_head.store(block, rl::memory_order_relaxed);
         free_head = block + 1;
-        free_tail.store(block + count - 1, std::memory_order_relaxed);
-        free_tail.load(std::memory_order_relaxed)->next.store(0, std::memory_order_relaxed);
+		free_tail.store(block + count - 1, rl::memory_order_relaxed);
+		free_tail.load(rl::memory_order_relaxed)->next.store(0, rl::memory_order_relaxed);
         for (size_t i = 1; i != count - 1; i += 1)
-            block[i].next.store(block + i + 1, std::memory_order_relaxed);
+			block[i].next.store(block + i + 1, rl::memory_order_relaxed);
     }
 
     ~queue()
@@ -36,13 +36,13 @@ public:
     void enqueue_commit()
     {
         node* n = get_free_node();
-        n->next.store(0, std::memory_order_release);
-        full_tail->next.store(n, std::memory_order_seq_cst);
-        bool signal = waiting.load(std::memory_order_seq_cst);
+		n->next.store(0, rl::memory_order_release);
+		full_tail->next.store(n, rl::memory_order_seq_cst);
+		bool signal = waiting.load(rl::memory_order_seq_cst);
         full_tail = n;
         if (signal)
         {
-            waiting.store(false, std::memory_order_relaxed);
+			waiting.store(false, rl::memory_order_relaxed);
             ReleaseSemaphore(sema, 1, 0);
         }
     }
@@ -55,15 +55,15 @@ public:
 
     void dequeue_commit()
     {
-        deq_node->next.store(0, std::memory_order_release);
-        node* prev = free_tail.exchange(deq_node, std::memory_order_acq_rel);
-        prev->next.store(deq_node, std::memory_order_release);
+		deq_node->next.store(0, rl::memory_order_release);
+		node* prev = free_tail.exchange(deq_node, rl::memory_order_acq_rel);
+		prev->next.store(deq_node, rl::memory_order_release);
     }
 
 private:
     struct node
     {
-        std::atomic<node*>  next;
+        rl::atomic<node*>  next;
         VAR_T(T)            data;
     };
 
@@ -72,9 +72,9 @@ private:
     node*                   free_head;
     node*                   deq_node;
     char                    pad [64];
-    std::atomic<node*>      full_head;
-    std::atomic<node*>      free_tail;
-    std::atomic<bool>       waiting;
+    rl::atomic<node*>      full_head;
+    rl::atomic<node*>      free_tail;
+    rl::atomic<bool>       waiting;
     HANDLE                  sema;
 
     node* get_free_node()
@@ -82,26 +82,26 @@ private:
         for (;;)
         {
             node* n = free_head;
-            node* next = n->next.load(std::memory_order_acquire);
+			node* next = n->next.load(rl::memory_order_acquire);
             if (next)
             {
                 free_head = next;
                 return n;
             }
 
-            n = full_head.load(std::memory_order_acquire);
-            next = n->next.load(std::memory_order_acquire);
+			n = full_head.load(rl::memory_order_acquire);
+			next = n->next.load(rl::memory_order_acquire);
             if (next)
             {
-                if (full_head.compare_exchange_strong(n, next, std::memory_order_seq_cst))
+				if (full_head.compare_exchange_strong(n, next, rl::memory_order_seq_cst))
                 {
                     //node* n2 = free_head;
-                    //node* next2 = n2->next.load(std::memory_order_acquire);
+                    //node* next2 = n2->next.load(rl::memory_order_acquire);
                     //if (next2)
                     //{
-                    //    n->next.store(0, std::memory_order_release);
-                    //    node* prev = free_tail.exchange(n, std::memory_order_acq_rel);
-                    //    prev->next.store(n, std::memory_order_release);
+                    //    n->next.store(0, rl::memory_order_release);
+                    //    node* prev = free_tail.exchange(n, rl::memory_order_acq_rel);
+                    //    prev->next.store(n, rl::memory_order_release);
                     //    free_head = next2;
                     //    return n2;
                     //}
@@ -116,27 +116,27 @@ private:
 
     node* get_full_node()
     {
-        node* n = full_head.load(std::memory_order_acquire);
+		node* n = full_head.load(rl::memory_order_acquire);
         for (;;)
         {
-            node* next = n->next.load(std::memory_order_acquire);
+			node* next = n->next.load(rl::memory_order_acquire);
             if (next == 0)
             {
-                waiting.store(true, std::memory_order_seq_cst);
-                n = full_head.load(std::memory_order_seq_cst);
-                next = n->next.load(std::memory_order_acquire);
+				waiting.store(true, rl::memory_order_seq_cst);
+				n = full_head.load(rl::memory_order_seq_cst);
+				next = n->next.load(rl::memory_order_acquire);
                 if (next)
                 {
-                    waiting.store(false, std::memory_order_relaxed);
+					waiting.store(false, rl::memory_order_relaxed);
                 }
                 else
                 {
                     WaitForSingleObject(sema, INFINITE);
-                    n = full_head.load(std::memory_order_acquire);
+					n = full_head.load(rl::memory_order_acquire);
                     continue;
                 }
             }
-            if (full_head.compare_exchange_strong(n, next, std::memory_order_acq_rel))
+			if (full_head.compare_exchange_strong(n, next, rl::memory_order_acq_rel))
                 return n;
         }
     }

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "../../relacy/relacy_std.hpp"
+#include "../../relacy/relacy.hpp"
 
 
 unsigned const thread_count = 3;
@@ -11,23 +11,23 @@ struct smr_test : rl::test_suite<smr_test, thread_count>
 {
     struct node
     {
-        std::atomic<node*> next_;
+		rl::atomic<node*> next_;
         rl::var<int> data_;
     };
 
-    std::atomic<node*> head_;
+	rl::atomic<node*> head_;
 
-    std::atomic<node*> hp_ [thread_count];
+	rl::atomic<node*> hp_[thread_count];
     rl::var<node*> defer_ [thread_count][thread_count];
     rl::var<int> defer_size_ [thread_count];
 
     void before()
     {
-        head_.store(0, std::memory_order_relaxed);
+		head_.store(0, rl::memory_order_relaxed);
 
         for (size_t i = 0; i != thread_count; ++i)
         {
-            hp_[i].store(0, std::memory_order_relaxed);
+			hp_[i].store(0, rl::memory_order_relaxed);
             VAR(defer_size_[i]) = 0;
             for (size_t j = 0; j != thread_count; ++j)
                 VAR(defer_[i][j]) = 0;
@@ -38,7 +38,7 @@ struct smr_test : rl::test_suite<smr_test, thread_count>
     {
         node* n = new node ();
         n->VAR(data_) = data;
-        node* next = head_.load(std::memory_order_relaxed);
+		node* next = head_.load(rl::memory_order_relaxed);
         for (;;)
         {
             n->next_.store(next, rl::memory_order_relaxed);
@@ -78,7 +78,7 @@ struct smr_test : rl::test_suite<smr_test, thread_count>
         node* hp [thread_count] = {};
         for (size_t i = 0; i != thread_count; ++i)
         {
-            hp[i] = hp_[i].load(std::memory_order_relaxed);
+			hp[i] = hp_[i].load(rl::memory_order_relaxed);
         }
 
         for (size_t i = 0; i != thread_count; ++i)
@@ -106,7 +106,7 @@ struct smr_test : rl::test_suite<smr_test, thread_count>
 
     void smr_defer(unsigned index, node* n)
     {
-        std::atomic_thread_fence(std::memory_order_seq_cst);
+		rl::atomic_thread_fence(rl::memory_order_seq_cst);
 
         smr_pump(index);
 
@@ -131,15 +131,15 @@ struct smr_test : rl::test_suite<smr_test, thread_count>
         }
     }
 
-    node* smr_acquire(unsigned index, std::atomic<node*>& n)
+	node* smr_acquire(unsigned index, rl::atomic<node*>& n)
     {
         node* v = 0;
         for (;;)
         {
-            v = n.load(std::memory_order_relaxed);
-            hp_[index].store(v, std::memory_order_relaxed);
-            std::atomic_thread_fence(std::memory_order_seq_cst);
-            node* v2 = n.load(std::memory_order_acquire);
+			v = n.load(rl::memory_order_relaxed);
+			hp_[index].store(v, rl::memory_order_relaxed);
+			rl::atomic_thread_fence(rl::memory_order_seq_cst);
+			node* v2 = n.load(rl::memory_order_acquire);
             if (v2 == v)
                 break;
         }
@@ -148,7 +148,7 @@ struct smr_test : rl::test_suite<smr_test, thread_count>
 
     void smr_release(unsigned index)
     {
-        hp_[index].store(0, std::memory_order_relaxed);
+		hp_[index].store(0, rl::memory_order_relaxed);
     }
 
     void thread(unsigned index)

@@ -1,36 +1,37 @@
 #include "stdafx.h"
+#include "relacy/relacy.hpp"
 
-
-#ifdef RL_TEST
-#define ATOMIC(x) rl::atomic<x>
-#define VAR(x) rl::var<x>
-#define ATOMIC_FETCH_ADD(x, v) x($).fetch_add(v)
-#define ATOMIC_COMPARE_EXCHANGE(x, c, v) x($).compare_exchange(c, v)
-#define LOAD_ACQ(x) x($).load(rl::memory_order_acquire)
-#define STORE_REL(x, v) x($).store(v, rl::memory_order_release)
-#else
-#define ATOMIC(x) x volatile
-#define VAR(x) x
-#define ATOMIC_FETCH_ADD(x, v) _InterlockedExchangeAdd((long*)&x, v)
-#define ATOMIC_COMPARE_EXCHANGE(x, c, v) interlocked_compare_exchange(x, c, v)
-#define LOAD_ACQ(x) x
-#define STORE_REL(x, v) x = v
-
-template<typename T>
-bool interlocked_compare_exchange(T& x, T& c, T v)
-{
-    T c0 = _InterlockedCompareExchange((long*)&x), v, c);
-    if (c0 == c)
-    {
-        return true;
-    }
-    else
-    {
-        c = c0;
-        return false;
-    }
-}
-#endif
+// RLC - 2014-08-16: this whole block doesn't appear to serve any purpose, seems out-dated and should probably be removed altogether...
+//#ifdef RL_TES-
+//#define ATOMIC(x) rl::atomic<x>
+//#define VAR_T(x) rl::var<x>
+//#define ATOMIC_FETCH_ADD(x, v) x($).fetch_add(v)
+//#define ATOMIC_COMPARE_EXCHANGE(x, c, v) x($).compare_exchange(c, v)
+//#define LOAD_ACQ(x) x($).load(rl::memory_order_acquire)
+//#define STORE_REL(x, v) x($).store(v, rl::memory_order_release)
+//#else
+//#define ATOMIC(x) x volatile
+//#define VAR_T(x) x
+//#define ATOMIC_FETCH_ADD(x, v) _InterlockedExchangeAdd((long*)&x, v)
+//#define ATOMIC_COMPARE_EXCHANGE(x, c, v) interlocked_compare_exchange(x, c, v)
+//#define LOAD_ACQ(x) x
+//#define STORE_REL(x, v) x = v
+//
+//template<typename T>
+//bool interlocked_compare_exchange(T& x, T& c, T v)
+//{
+//    T c0 = _InterlockedCompareExchange((long*)&x), v, c);
+//    if (c0 == c)
+//    {
+//        return true;
+//    }
+//    else
+//    {
+//        c = c0;
+//        return false;
+//    }
+//}
+//#endif
 
 //#include "pcx.h"
 
@@ -220,8 +221,8 @@ struct thread_node
     rl::var<thread_node*>       next;
     rl::var<size_t>             count;
     rl::var<size_t>             unconsumed;
-    rl::HANDLE                  sema;
-    rl::CRITICAL_SECTION        mtx;
+    rl::rl_HANDLE               sema;
+    rl::rl_CRITICAL_SECTION     mtx;
 };
 
 
@@ -231,8 +232,8 @@ void on_thread_exit(thread_node*& t_thread_node)
     thread_node* my = 0;
     if (head)
     {
-        rl::EnterCriticalSection(&head->mtx, $);
-        std::atomic_thread_fence($)(std::memory_order_seq_cst);
+        rl::rl_EnterCriticalSection(&head->mtx, $);
+        rl::atomic_thread_fence(rl::memory_order_seq_cst);
         if (head->next($))
         {
             my = head->next($);
@@ -242,18 +243,18 @@ void on_thread_exit(thread_node*& t_thread_node)
         {
             my = head;
         }
-        std::atomic_thread_fence($)(std::memory_order_seq_cst);
-        rl::LeaveCriticalSection(&head->mtx, $);
+        rl::atomic_thread_fence(rl::memory_order_seq_cst);
+        rl::rl_LeaveCriticalSection(&head->mtx, $);
 
         while (my->unconsumed($))
         {
-            rl::WaitForSingleObject(my->sema, rl::RL_INFINITE, $);
+            rl::rl_WaitForSingleObject(my->sema, rl::rl_INFINITE, $);
             my->unconsumed($) -= 1;
         }
 
-        rl::DeleteCriticalSection(&my->mtx, $);
-        rl::CloseHandle(my->sema, $);
-        RL_DELETE(my);
+        rl::rl_DeleteCriticalSection(&my->mtx, $);
+        rl::rl_CloseHandle(my->sema, $);
+        delete my;
     }
 
 }
@@ -263,12 +264,12 @@ struct eventcount
     eventcount()
     {
         root($) = 0;
-        rl::InitializeCriticalSection(&mtx, $);
+        rl::rl_InitializeCriticalSection(&mtx, $);
     }
 
     ~eventcount()
     {
-        rl::DeleteCriticalSection(&mtx, $);
+        rl::rl_DeleteCriticalSection(&mtx, $);
     }
 
     void prepare_wait(thread_node*& t_thread_node)
@@ -277,8 +278,8 @@ struct eventcount
         thread_node* head = t_thread_node;
         if (head)
         {
-            rl::EnterCriticalSection(&head->mtx, $);
-            std::atomic_thread_fence($)(std::memory_order_seq_cst);
+            rl::rl_EnterCriticalSection(&head->mtx, $);
+            rl::atomic_thread_fence(rl::memory_order_seq_cst);
             //RL_ASSERT(head->status == stat_root);
             RL_ASSERT (root($) != head);
             if (head->next($))
@@ -301,23 +302,23 @@ struct eventcount
                 //    __asm int 3;
                 RL_ASSERT(0 == my->count($));
             }
-            std::atomic_thread_fence($)(std::memory_order_seq_cst);
-            rl::LeaveCriticalSection(&head->mtx, $);
+            rl::atomic_thread_fence(rl::memory_order_seq_cst);
+            rl::rl_LeaveCriticalSection(&head->mtx, $);
         }
         else
         {
-            my = RL_NEW thread_node;
+            my = new thread_node;
             my->next($) = 0;
             my->count($) = 0;
             my->unconsumed($) = 0;
-            my->sema = rl::CreateSemaphore(0, 0, LONG_MAX, 0, $);
+            my->sema = rl_CreateSemaphore(0, 0, LONG_MAX, 0);
             //my->status = stat_private;
-            rl::InitializeCriticalSection(&my->mtx, $);
+            rl::rl_InitializeCriticalSection(&my->mtx, $);
         }
 
         while (my->unconsumed($))
         {
-            rl::WaitForSingleObject(my->sema, rl::RL_INFINITE, $);
+            rl::rl_WaitForSingleObject(my->sema, rl::rl_INFINITE, $);
             my->unconsumed($) -= 1;
         }
 
@@ -325,8 +326,8 @@ struct eventcount
         RL_ASSERT(0 == my->count($));
         //if (my->status != stat_private) __asm int 3;
 
-        rl::EnterCriticalSection(&mtx, $);
-        std::atomic_thread_fence($)(std::memory_order_seq_cst);
+        rl::rl_EnterCriticalSection(&mtx, $);
+        rl::atomic_thread_fence(rl::memory_order_seq_cst);
         RL_ASSERT(root($) != my);
         if (root($))
         {
@@ -348,8 +349,8 @@ struct eventcount
             //    __asm int 3;
         }
         ((thread_node*)root($))->count($) += 1;
-        std::atomic_thread_fence($)(std::memory_order_seq_cst);
-        rl::LeaveCriticalSection(&mtx, $);
+        rl::atomic_thread_fence(rl::memory_order_seq_cst);
+        rl::rl_LeaveCriticalSection(&mtx, $);
         t_thread_node = my;
     }
 
@@ -358,15 +359,15 @@ struct eventcount
         thread_node* head = t_thread_node;
         if (head == root($))
         {
-            rl::WaitForSingleObject(head->sema, rl::RL_INFINITE, $);
+            rl::rl_WaitForSingleObject(head->sema, rl::rl_INFINITE, $);
         }
         else
         {
-            rl::EnterCriticalSection(&head->mtx, $);
-            std::atomic_thread_fence($)(std::memory_order_seq_cst);
+            rl::rl_EnterCriticalSection(&head->mtx, $);
+            rl::atomic_thread_fence(rl::memory_order_seq_cst);
             head->unconsumed($) += 1;
-            std::atomic_thread_fence($)(std::memory_order_seq_cst);
-            rl::LeaveCriticalSection(&head->mtx, $);
+            rl::atomic_thread_fence(rl::memory_order_seq_cst);
+            rl::rl_LeaveCriticalSection(&head->mtx, $);
         }
     }
 
@@ -375,8 +376,8 @@ struct eventcount
         thread_node* head = t_thread_node;
         if (head == root($))
         {
-            rl::EnterCriticalSection(&mtx, $);
-            std::atomic_thread_fence($)(std::memory_order_seq_cst);
+            rl::rl_EnterCriticalSection(&mtx, $);
+            rl::atomic_thread_fence(rl::memory_order_seq_cst);
             if (head == root($))
             {
                 thread_node* my = 0;
@@ -392,20 +393,20 @@ struct eventcount
                     my = head;
                     root($) = 0;
                 }
-                std::atomic_thread_fence($)(std::memory_order_seq_cst);
-                rl::LeaveCriticalSection(&mtx, $);
+                rl::atomic_thread_fence(rl::memory_order_seq_cst);
+                rl::rl_LeaveCriticalSection(&mtx, $);
                 //my->status = stat_root;
                 t_thread_node = my;
                 return;
             }
-            std::atomic_thread_fence($)(std::memory_order_seq_cst);
-            rl::LeaveCriticalSection(&mtx, $);
+            rl::atomic_thread_fence(rl::memory_order_seq_cst);
+            rl::rl_LeaveCriticalSection(&mtx, $);
         }
-        rl::EnterCriticalSection(&head->mtx, $);
-        std::atomic_thread_fence($)(std::memory_order_seq_cst);
+        rl::rl_EnterCriticalSection(&head->mtx, $);
+        rl::atomic_thread_fence(rl::memory_order_seq_cst);
         head->unconsumed($) += 1;
-        std::atomic_thread_fence($)(std::memory_order_seq_cst);
-        rl::LeaveCriticalSection(&head->mtx, $);
+        rl::atomic_thread_fence(rl::memory_order_seq_cst);
+        rl::rl_LeaveCriticalSection(&head->mtx, $);
     }
 
     void signal_all()
@@ -415,24 +416,24 @@ struct eventcount
         thread_node* head = root($);
         if (0 == head)
             return;
-        rl::EnterCriticalSection(&mtx, $);
-        std::atomic_thread_fence($)(std::memory_order_seq_cst);
+        rl::rl_EnterCriticalSection(&mtx, $);
+        rl::atomic_thread_fence(rl::memory_order_seq_cst);
         if (head != root($))
         {
-            std::atomic_thread_fence($)(std::memory_order_seq_cst);
-            rl::LeaveCriticalSection(&mtx, $);
+            rl::atomic_thread_fence(rl::memory_order_seq_cst);
+            rl::rl_LeaveCriticalSection(&mtx, $);
             return;
         }
         size_t count = head->count($);
         head->count($) = 0;
         root($) = 0;
-        std::atomic_thread_fence($)(std::memory_order_seq_cst);
-        rl::LeaveCriticalSection(&mtx, $);
-        rl::ReleaseSemaphore(head->sema, count, 0, $);
+        rl::atomic_thread_fence(rl::memory_order_seq_cst);
+        rl::rl_LeaveCriticalSection(&mtx, $);
+        rl::rl_ReleaseSemaphore(head->sema, count, 0, $);
     }
 
-    std::atomic<thread_node*>       root;
-    rl::CRITICAL_SECTION            mtx;
+    rl::atomic<thread_node*>       root;
+    rl::rl_CRITICAL_SECTION            mtx;
 
 }; 
 
@@ -441,7 +442,7 @@ struct eventcount
 
 struct test_ec : rl::test_suite<test_ec, 8>
 {
-    std::atomic<int> x [2];
+    rl::atomic<int> x [2];
     eventcount ec;
 
     void before()
@@ -470,7 +471,7 @@ struct test_ec : rl::test_suite<test_ec, 8>
                     int cmp = x[idx % 2]($);
                     if (cmp > 0)
                     {
-                        if (x[idx % 2]($).compare_exchange(cmp, cmp - 1))
+                        if (x[idx % 2]($).compare_exchange_strong(cmp, cmp - 1))
                             break;
                     }
                     else
@@ -504,8 +505,8 @@ struct test_ec : rl::test_suite<test_ec, 8>
 int main()
 {
     rl::test_params p;
-    p.iteration_count = 20000000;
-    p.initial_state = "10000000";
+    p.iteration_count = 2000/*0000*/;
+	p.initial_state = "1000";
     rl::simulate<test_ec>(p);
 }
 

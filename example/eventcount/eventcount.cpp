@@ -2,17 +2,17 @@
 
 #include "../../relacy/windows.h"
 
-#define HANDLE rl::HANDLE
-
-#define CreateSemaphoreA rl::RL_CreateSemaphore($)
-#define CreateSemaphoreW rl::RL_CreateSemaphore($)
-#ifndef CreateSemaphore
-#   define CreateSemaphore CreateSemaphoreW
-#endif
-
-
-#define CloseHandle rl::RL_CloseHandle($)
-
+//#define HANDLE rl::HANDLE
+//
+//#define CreateSemaphoreA rl::RL_CreateSemaphore($)
+//#define CreateSemaphoreW rl::RL_CreateSemaphore($)
+//#ifndef CreateSemaphore
+//#   define CreateSemaphore CreateSemaphoreW
+//#endif
+//
+//
+//#define CloseHandle rl::RL_CloseHandle($)
+//
 
 #include <stddef.h>
 

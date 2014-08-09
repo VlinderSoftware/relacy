@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "../../relacy/relacy_std.hpp"
+#include "../../relacy/relacy.hpp"
 
 
 // TEST FAILS WITH "ACCESS TO FREED MEMORY"
@@ -52,11 +52,11 @@ public:
 private:
     struct node
     {
-        std::atomic<node*> next_;
+		rl::atomic<node*> next_;
         rl::var<int> data_;
     };
 
-    std::atomic<node*> head_;
+	rl::atomic<node*> head_;
 
     stack(stack const&);
     stack& operator = (stack const&);

@@ -16,7 +16,7 @@
 #include "pch.hpp"
 
 
-#if defined(RL_WIN) || defined(_CYGWIN)
+#if defined(RL_WIN) || defined(__CYGWIN__)
 
 typedef void* fiber_t;
 

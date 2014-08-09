@@ -92,7 +92,7 @@ private:
 
 //#define THREAD_LOCAL __declspec(thread)
 
-#elif defined(POSIX) && defined(GCC)
+#elif (defined(POSIX) && defined(GCC)) || defined(__CYGWIN__)
 
 #include <pthread.h>
 #include <semaphore.h>
@@ -833,7 +833,7 @@ struct condvar_test : rl::test_suite<condvar_test, 3>
 int main()
 {
     rl::test_params p;
-    p.iteration_count = 100000000;
+    p.iteration_count = 1000/*00000*/;
     //p.initial_state = "30000000";
     //p.search_type = rl::fair_context_bound_scheduler_type;
     rl::simulate<queue_test>(p);

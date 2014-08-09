@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "../../relacy/relacy_std.hpp"
+#include "../../relacy/relacy.hpp"
 
 
 struct pc_sys_anchor;
@@ -54,8 +54,8 @@ std::ostream& operator << (std::ostream& s, pc_sys_anchor const& right)
 
 struct pc_region
 {
-    std::atomic<pc_sys_anchor> next;
-    std::atomic<pc_region*> defer;
+    rl::atomic<pc_sys_anchor> next;
+    rl::atomic<pc_region*> defer;
 
     pc_region()
     {
@@ -77,7 +77,7 @@ struct pc_region
 
 struct pc_master
 {
-    std::atomic<pc_sys_anchor> head;
+    rl::atomic<pc_sys_anchor> head;
     pc_region stub_region;
     pc_fp_dtor* fp_dtor;
 
@@ -114,7 +114,7 @@ struct pc_master
         node->next.store(src, rl::memory_order_relaxed);
         pc_sys_anchor xchg (0, node);
         pc_sys_anchor cmp = head.load(rl::memory_order_relaxed);
-        while (false == head.compare_exchange_weak(cmp, xchg, std::memory_order_acq_rel));
+        while (false == head.compare_exchange_weak(cmp, xchg, rl::memory_order_acq_rel));
 
         pc_sys_anchor cmp2 = cmp.region->next.load(rl::memory_order_relaxed);
         pc_sys_anchor xchg2;
@@ -194,7 +194,7 @@ struct pc_master
 struct foo_node
 {
     pc_node pcn;
-    std::atomic<foo_node*> next;
+    rl::atomic<foo_node*> next;
     rl::var<int> data;
 };
 
@@ -207,7 +207,7 @@ void foo_node_dtor(pc_node* pcn)
 
 struct foo_list
 {
-    std::atomic<foo_node*> head;
+	rl::atomic<foo_node*> head;
     pc_master pc;
 
     foo_list()
