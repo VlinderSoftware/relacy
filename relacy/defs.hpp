@@ -46,22 +46,6 @@ enum unpark_reason
     unpark_reason_spurious,
 };
 
-struct debug_info
-{
-    char const* func_;
-    char const* file_;
-    unsigned line_;
-
-    debug_info(char const* func = "", char const* file = "", unsigned line = 0)
-        : func_(func)
-        , file_(file)
-        , line_(line)
-    {
-    }
-};
-
-typedef debug_info const& debug_info_param;
-
 inline void assert_failed(char const* cond, debug_info_param info)
 {
     std::cout << "RELACY INTERNAL ASSERT FAILED: '" << cond
