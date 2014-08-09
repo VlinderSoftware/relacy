@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.11 FATAL_ERROR)
 project(relacy)
 
+# enable testing
+enable_testing()
+include(Dart)
+
 include(CheckCXXSourceCompiles)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -43,8 +47,8 @@ add_executable(test_relacy
 foreach(example
 	cli_ws_deque
 	condvar
-#	eao_blocking
-	eventcount
+	#eao_blocking               # all of the implementing code is commented out in this example /rlc (2014-08-07)
+	#eventcount                 # this example appears to be broken: it deletes a thread-local static. As Relacy tries to do this twice expecting the same results, the second time it gets a stale pointer, and crashes /rlc (2014-08-07)
 	examples
 	java_ws_deque
 	mpmc

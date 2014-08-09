@@ -7,7 +7,9 @@ struct pc_region;
 struct pc_master;
 typedef pc_region pc_node;
 typedef void (pc_fp_dtor) (pc_region*);
+#ifdef _MSC_VER
 typedef unsigned __int64 uint64_t;
+#endif
 
 struct pc_sys_anchor
 {
