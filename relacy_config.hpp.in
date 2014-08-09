@@ -1,0 +1,12 @@
+#ifndef relacy_config_hpp
+#define relacy_config_hpp
+
+#ifdef _MSC_VER
+#pragma once
+#endif
+
+#ifndef HAVE_STD_ATOMIC
+#cmakedefine HAVE_STD_ATOMIC
+#endif
+
+#endif
