@@ -114,6 +114,10 @@ T val(T x)
 #include "defs.hpp"
 
 
+#define RL_INFO ::rl::debug_info(__FUNCTION__, __FILE__, __LINE__)
+#define $ RL_INFO
+
+
 #ifdef RL_DO_ASSERT
 #   if RL_DO_ASSERT
 #       define RL_DO_ASSERT_IMPL

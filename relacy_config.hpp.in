@@ -8,11 +8,5 @@
 #ifndef HAVE_STD_ATOMIC
 #cmakedefine HAVE_STD_ATOMIC
 #endif
-#ifndef HAVE__FUNCTION__
-#cmakedefine HAVE__FUNCTION__
-#endif
-#ifndef HAVE__FUNC__
-#cmakedefine HAVE__FUNC__
-#endif
 
 #endif
