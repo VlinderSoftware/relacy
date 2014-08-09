@@ -1,31 +1,31 @@
 #pragma once
 
-#include "../relacy/relacy_std.hpp"
+#include "../relacy/relacy.hpp"
 
 
 
 template<int T>
 struct cas_spurious_fail_test : rl::test_suite<cas_spurious_fail_test<T>, 1, rl::test_result_until_condition_hit>
 {
-    std::atomic<int> x;
-    std::atomic<int> y;
+    rl::atomic<int> x;
+    rl::atomic<int> y;
 
     void before()
     {
-        x.store(0, std::memory_order_relaxed);
-        y.store(0, std::memory_order_relaxed);
+        x.store(0, rl::memory_order_relaxed);
+        y.store(0, rl::memory_order_relaxed);
     }
 
     void thread(unsigned /*index*/)
     {
         int cmp = 0;
-        if (x.compare_exchange_weak(cmp, 1, std::memory_order_seq_cst, std::memory_order_seq_cst))
+        if (x.compare_exchange_weak(cmp, 1, rl::memory_order_seq_cst, rl::memory_order_seq_cst))
         {
             cmp = 1;
-            if (x.compare_exchange_weak(cmp, 2, std::memory_order_seq_cst))
+            if (x.compare_exchange_weak(cmp, 2, rl::memory_order_seq_cst))
             {
                 cmp = 0;
-                if (y.compare_exchange_weak(cmp, 1, std::memory_order_seq_cst))
+                if (y.compare_exchange_weak(cmp, 1, rl::memory_order_seq_cst))
                 {
                 }
                 else

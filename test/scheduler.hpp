@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../relacy/relacy_std.hpp"
+#include "../relacy/relacy.hpp"
 
 
 
 struct livelock_test : rl::test_suite<livelock_test, 2, rl::test_result_livelock>
 {
-    std::atomic<int> x;
+    rl::atomic<int> x;
 
     void before()
     {
@@ -36,7 +36,7 @@ struct livelock_test : rl::test_suite<livelock_test, 2, rl::test_result_livelock
 
 struct yield_livelock_test : rl::test_suite<yield_livelock_test, 2, rl::test_result_livelock>
 {
-    std::atomic<int> x, y;
+    rl::atomic<int> x, y;
 
     void before()
     {
@@ -100,8 +100,8 @@ struct yield_livelock_test : rl::test_suite<yield_livelock_test, 2, rl::test_res
 
 struct sched_load_test : rl::test_suite<sched_load_test, 2>
 {
-    std::recursive_mutex mtx1, mtx2;
-    std::condition_variable_any cv1, cv2;
+    rl::recursive_mutex mtx1, mtx2;
+    rl::condition_variable_any cv1, cv2;
     VAR_T(int) data1, data2;
 
     void before()

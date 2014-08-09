@@ -25,6 +25,7 @@
 #    define _XOPEN_SOURCE
 #endif
 
+#include "relacy_config.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>

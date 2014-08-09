@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../relacy/relacy_std.hpp"
+#include "../relacy/relacy.hpp"
 
 
 
@@ -58,8 +58,8 @@ struct test_deadlock : rl::test_suite<test_deadlock, 2, rl::test_result_deadlock
 
 struct test_deadlock2 : rl::test_suite<test_deadlock2, 2, rl::test_result_deadlock>
 {
-    std::mutex m;
-    std::atomic<int> f;
+    rl::mutex m;
+    rl::atomic<int> f;
 
     void before()
     {
@@ -90,7 +90,7 @@ struct test_mutex_destuction : rl::test_suite<test_mutex_destuction, 1, rl::test
 {
     void thread(unsigned)
     {
-        std::mutex* m = new std::mutex;
+        rl::mutex* m = new rl::mutex;
         m->lock($);
         delete m;
     }
@@ -99,12 +99,12 @@ struct test_mutex_destuction : rl::test_suite<test_mutex_destuction, 1, rl::test
 
 struct test_mutex_destuction2 : rl::test_suite<test_mutex_destuction2, 2, rl::test_result_destroying_owned_mutex>
 {
-    std::mutex* m;
-    std::atomic<int> f;
+    rl::mutex* m;
+    rl::atomic<int> f;
 
     void before()
     {
-        m = new std::mutex;
+        m = new rl::mutex;
         f($) = 0;
     }
 
@@ -131,7 +131,7 @@ struct test_mutex_destuction2 : rl::test_suite<test_mutex_destuction2, 2, rl::te
 
 struct test_mutex_recursion : rl::test_suite<test_mutex_recursion, 2>
 {
-    std::recursive_mutex mtx;
+    rl::recursive_mutex mtx;
     rl::var<int> data;
 
     void before()
@@ -158,7 +158,7 @@ struct test_mutex_recursion : rl::test_suite<test_mutex_recursion, 2>
 
 struct test_mutex_try_lock : rl::test_suite<test_mutex_try_lock, 2>
 {
-    std::recursive_mutex mtx;
+    rl::recursive_mutex mtx;
     rl::var<int> data;
 
     void before()
@@ -188,7 +188,7 @@ struct test_mutex_recursion_error : rl::test_suite<test_mutex_recursion_error, 1
 {
     void thread(unsigned)
     {
-        std::mutex m;
+        rl::mutex m;
         m.lock($);
         m.lock($);
     }
@@ -200,7 +200,7 @@ struct test_mutex_unlock_error : rl::test_suite<test_mutex_unlock_error, 1, rl::
 {
     void thread(unsigned)
     {
-        std::mutex m;
+        rl::mutex m;
         m.lock($);
         m.unlock($);
         m.unlock($);
@@ -212,8 +212,8 @@ struct test_mutex_leak : rl::test_suite<test_mutex_leak, 1, rl::test_result_reso
 {
     void thread(unsigned)
     {
-        char* p = new char [sizeof(std::mutex)];
-        new (p) std::mutex();
+        char* p = new char [sizeof(rl::mutex)];
+        new (p) rl::mutex();
         delete [] p;
     }
 };

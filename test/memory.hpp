@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../relacy/relacy_std.hpp"
+#include "../relacy/relacy.hpp"
 
 
 struct test_memory_allocation : rl::test_suite<test_memory_allocation, 2>

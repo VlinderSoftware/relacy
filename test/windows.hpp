@@ -304,15 +304,15 @@ struct test_win_event : rl::test_suite<test_win_event, 2>
 
 struct test_FlushProcessWriteBuffers : rl::test_suite<test_FlushProcessWriteBuffers, 2>
 {
-    std::atomic<int> x1;
-    std::atomic<int> x2;
+    rl::atomic<int> x1;
+    rl::atomic<int> x2;
     int r1;
     int r2;
 
     void before()
     {
-        x1.store(0, std::memory_order_relaxed);
-        x2.store(0, std::memory_order_relaxed);
+        x1.store(0, rl::memory_order_relaxed);
+        x2.store(0, rl::memory_order_relaxed);
         r1 = r2 = 0;
     }
 
@@ -325,14 +325,14 @@ struct test_FlushProcessWriteBuffers : rl::test_suite<test_FlushProcessWriteBuff
     {
         if (index)
         {
-            x1.store(1, std::memory_order_relaxed);
-            r1 = x2.load(std::memory_order_relaxed);
+            x1.store(1, rl::memory_order_relaxed);
+            r1 = x2.load(rl::memory_order_relaxed);
         }
         else
         {
-            x2.store(1, std::memory_order_relaxed);
+            x2.store(1, rl::memory_order_relaxed);
             FlushProcessWriteBuffers();
-            r2 = x1.load(std::memory_order_relaxed);
+            r2 = x1.load(rl::memory_order_relaxed);
         }
     }
 };

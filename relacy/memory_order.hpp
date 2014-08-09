@@ -15,11 +15,8 @@
 
 #include "base.hpp"
 
-
 namespace rl
 {
-
-
 enum memory_order
 {
     mo_relaxed,
@@ -29,7 +26,6 @@ enum memory_order
     mo_acq_rel,
     mo_seq_cst,
 };
-
 
 
 

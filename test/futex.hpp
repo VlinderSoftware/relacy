@@ -28,7 +28,7 @@ struct test_futex : rl::test_suite<test_futex, 2>
 	{
 		if (index == 0)
 		{
-			state.store(1, std::memory_order_relaxed);
+			state.store(1, rl::memory_order_relaxed);
 			wakeres = futex(&state, FUTEX_WAKE, 1, 0, 0, 0);
 		}
 		else
@@ -76,7 +76,7 @@ struct test_futex_sync1 : rl::test_suite<test_futex_sync1, 2, rl::test_result_un
 		if (index == 0)
 		{
 			VAR(data) = 1;
-			state.store(1, std::memory_order_release);
+			state.store(1, rl::memory_order_release);
 			futex(&state, FUTEX_WAKE, 1, 0, 0, 0);
 		}
 		else
@@ -112,7 +112,7 @@ struct test_futex_sync2 : rl::test_suite<test_futex_sync2, 2, rl::test_result_un
 		if (index == 0)
 		{
 			VAR(data) = 1;
-			state.store(1, std::memory_order_release);
+			state.store(1, rl::memory_order_release);
 			futex(&state, FUTEX_WAKE, 1, 0, 0, 0);
 		}
 		else
@@ -148,7 +148,7 @@ struct test_futex_intr : rl::test_suite<test_futex_intr, 2, rl::test_result_unti
 		if (index == 0)
 		{
 			VAR(data) = 1;
-			state.store(1, std::memory_order_release);
+			state.store(1, rl::memory_order_release);
 			futex(&state, FUTEX_WAKE, 1, 0, 0, 0);
 		}
 		else
