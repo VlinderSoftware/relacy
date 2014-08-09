@@ -49,10 +49,6 @@
 #include <map>
 #include <new>
 
-#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
-#   define RL_WIN
-#endif
-
 #if defined(RL_WIN) || defined(__CYGWIN__)
 #   ifndef _WIN32_WINNT
 #       define _WIN32_WINNT 0x0500

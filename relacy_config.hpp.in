@@ -14,5 +14,8 @@
 #ifndef HAVE__FUNCTION__
 #cmakedefine HAVE__FUNCTION__
 #endif
+#ifndef RL_WIN
+#cmakedefine RL_WIN
+#endif
 
 #endif

@@ -41,6 +41,7 @@ file(GLOB_RECURSE RELACY_SOURCES relacy/*.h relacy/*.hpp)
 add_custom_target(relacy SOURCES ${RELACY_SOURCES})
 
 if (MSVC)
+	set(RL_WIN 1)
 	add_executable(test_relacy
 	    test/compare_swap.hpp
 	    test/condvar.hpp

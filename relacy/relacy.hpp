@@ -13,7 +13,7 @@
 #   pragma once
 #endif
 
-
+#include "relacy_config.hpp"
 #include "base.hpp"
 #include "context.hpp"
 #include "context_base_impl.hpp"
@@ -32,9 +32,8 @@
 
 #ifdef RL_WIN
 #include "stdlib/windows.hpp"
-#else
-#include "stdlib/pthread.hpp"
 #endif
+#include "stdlib/pthread.hpp"
 
 #define VAR_T(x) rl::var<x>
 #define TLS_T(T) rl::thread_local_var<T>
