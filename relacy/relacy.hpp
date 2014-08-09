@@ -30,8 +30,11 @@
 #include "stdlib/semaphore.hpp"
 #include "stdlib/event.hpp"
 
+#ifdef RL_WIN
 #include "stdlib/windows.hpp"
+#else
 #include "stdlib/pthread.hpp"
+#endif
 
 #define VAR_T(x) rl::var<x>
 #define TLS_T(T) rl::thread_local_var<T>

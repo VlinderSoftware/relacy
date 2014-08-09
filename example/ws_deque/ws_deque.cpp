@@ -1,12 +1,8 @@
 #include "stdafx.h"
 #include "../../relacy/relacy.hpp"
 
-
 using namespace std;
 using rl::var;
-
-
-
 
 template<typename T>
 class ws_deque
@@ -30,6 +26,7 @@ public:
 
     bool IsEmpty() const
     {
+	    using namespace rl;
         return m_headIndex.load(memory_order_acquire)
             >= m_tailIndex.load(memory_order_acquire);
     }
