@@ -20,6 +20,19 @@ check_cxx_source_compiles("
   }
 " HAVE_STD_ATOMIC)
 
+check_cxx_source_compiles("
+  int main() { 
+    char const * func = __func__;
+    return 0; 
+  }
+" HAVE__FUNC__)
+check_cxx_source_compiles("
+  int main() { 
+    char const * func = __FUNCTION__;
+    return 0; 
+  }
+" HAVE__FUNCTION__)
+
 file(GLOB_RECURSE RELACY_SOURCES relacy/*.h relacy/*.hpp)
 add_custom_target(relacy SOURCES ${RELACY_SOURCES})
 

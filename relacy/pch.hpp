@@ -74,4 +74,6 @@
 #   include <setjmp.h>
 #endif
 
+#include "debug_info.hpp"
+
 #endif
