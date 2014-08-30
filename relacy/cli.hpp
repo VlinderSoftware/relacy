@@ -14,6 +14,7 @@
 #endif
 
 #include "base.hpp"
+#include "debug_info.hpp"
 #include "context_base.hpp"
 #include "atomic_fence.hpp"
 
