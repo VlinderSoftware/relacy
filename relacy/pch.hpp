@@ -56,11 +56,13 @@
 #   define WIN32_LEAN_AND_MEAN
 #   include <windows.h>
 #   include <process.h>
-#   ifdef RL_WIN
+#   if defined(HAVE_INTRIN_H)
 #       include <intrin.h>
 #   else
 #       include <stdint.h>
-#       include <sys/times.h>
+#       if defined(HAVE_SYS_TIMES_H)
+#           include <sys/times.h>
+#       endif
 #   endif
 #else
 #   include <stdint.h>

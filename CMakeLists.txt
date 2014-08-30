@@ -6,10 +6,13 @@ enable_testing()
 include(Dart)
 
 include(CheckCXXSourceCompiles)
+include(CheckIncludeFileCXX)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+check_include_file_cxx(intrin.h HAVE_INTRIN_H)
+check_include_file_cxx("sys/times.h" HAVE_SYS_TIMES_H)
 check_cxx_source_compiles("
   #include <atomic>
   int main() { 
@@ -40,7 +43,7 @@ HAVE__FUNCTION__)
 file(GLOB_RECURSE RELACY_SOURCES relacy/*.h relacy/*.hpp)
 add_custom_target(relacy SOURCES ${RELACY_SOURCES})
 
-if (MSVC)
+if (MSVC OR MINGW)
 	set(RL_WIN 1)
 	add_executable(test_relacy
 	    test/compare_swap.hpp
@@ -64,21 +67,32 @@ if (MSVC)
 	    )
 	
 	foreach(example
-		cli_ws_deque
 		condvar
 		examples
 		mpmc
 		peterson
-		tbb_eventcount
-		ws_deque2
 		)
-	add_executable(example_${example}
-		example/${example}/${example}.cpp
-		example/${example}/stdafx.cpp
-		example/${example}/stdafx.h
-		)
-	add_test(example_${example} ${EXECUTABLE_OUTPUT_PATH}/example_${example})
-endforeach()
+        add_executable(example_${example}
+            example/${example}/${example}.cpp
+            example/${example}/stdafx.cpp
+            example/${example}/stdafx.h
+            )
+        add_test(example_${example} ${EXECUTABLE_OUTPUT_PATH}/example_${example})
+    endforeach()
+    if (MSVC)
+        foreach(example
+            cli_ws_deque
+            tbb_eventcount
+            ws_deque2
+            )
+            add_executable(example_${example}
+                example/${example}/${example}.cpp
+                example/${example}/stdafx.cpp
+                example/${example}/stdafx.h
+                )
+            add_test(example_${example} ${EXECUTABLE_OUTPUT_PATH}/example_${example})
+        endforeach()
+    endif()
 endif()
 foreach(example
 	#eao_blocking               # all of the implementing code is commented out in this example /rlc (2014-08-07)
